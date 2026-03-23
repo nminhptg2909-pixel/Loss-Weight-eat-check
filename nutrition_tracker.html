@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Nutrition Tracker</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#1a1a1a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;}
+.app{max-width:390px;margin:0 auto;padding-bottom:36px;}
+.topbar{padding:20px 18px 12px;text-align:center;background:#1a1a1a;}
+.topbar h1{font-size:19px;font-weight:600;color:#ffffff;}
+.topbar p{font-size:11px;color:#aaa;margin-top:2px;}
+.goal-pill{display:inline-flex;align-items:center;gap:5px;background:#E1F5EE;color:#085041;border-radius:20px;padding:5px 14px;margin-top:8px;}
+.goal-pill span{font-size:11px;font-weight:500;}
+.nav{display:flex;gap:8px;margin:14px 18px;}
+.nav-btn{flex:1;padding:10px 4px;border:none;font-size:11px;border-radius:12px;cursor:pointer;font-family:inherit;font-weight:600;transition:opacity 0.15s;-webkit-tap-highlight-color:transparent;}
+.nav-btn.t0{background:#9FE1CB;color:#04342C;}
+.nav-btn.t1{background:#FAC775;color:#412402;}
+.nav-btn.t2{background:#B5D4F4;color:#042C53;}
+.nav-btn:not(.active){opacity:0.35;}
+.nav-btn.active{opacity:1;}
+.page{padding:0 18px;display:none;}
+.page.active{display:block;}
+.top-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.ts-card{border-radius:16px;padding:14px;}
+.ts-card.cyan{background:#E1F5EE;border:1.5px solid #9FE1CB;}
+.ts-card.blue{background:#E6F1FB;border:1.5px solid #B5D4F4;}
+.ts-lbl{font-size:11px;font-weight:600;margin-bottom:3px;}
+.ts-card.cyan .ts-lbl{color:#085041;}
+.ts-card.blue .ts-lbl{color:#0C447C;}
+.ts-val{font-size:24px;font-weight:600;}
+.ts-card.cyan .ts-val{color:#0F6E56;}
+.ts-card.blue .ts-val{color:#185FA5;}
+.ts-val small{font-size:11px;font-weight:400;}
+.ts-sub{font-size:10px;margin-top:3px;}
+.ts-card.cyan .ts-sub{color:#085041;opacity:0.75;}
+.ts-card.blue .ts-sub{color:#0C447C;opacity:0.75;}
+.ts-remain{font-size:11px;margin-top:4px;}
+.ts-remain b{color:#0F6E56;}
+.ts-remain b.ov{color:#E24B4A;}
+.pbar{height:5px;border-radius:3px;margin-top:8px;overflow:hidden;}
+.ts-card.cyan .pbar{background:rgba(15,110,86,0.15);}
+.ts-card.blue .pbar{background:rgba(24,95,165,0.15);}
+.pfill{height:100%;border-radius:3px;transition:width 0.4s;}
+.cups-inline{display:flex;gap:4px;flex-wrap:wrap;margin-top:9px;}
+.cup{width:27px;height:27px;border-radius:7px;border:1.5px solid rgba(24,95,165,0.25);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;-webkit-tap-highlight-color:transparent;}
+.cup.on{background:#B5D4F4;border-color:#378ADD;}
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.sc{border-radius:16px;padding:13px;text-align:center;}
+.sc.amber{background:#FAEEDA;border:1.5px solid #FAC775;}
+.sc.green{background:#EAF3DE;border:1.5px solid #C0DD97;}
+.sc.amber .lbl{font-size:11px;font-weight:600;color:#633806;margin-bottom:2px;}
+.sc.green .lbl{font-size:11px;font-weight:600;color:#27500A;margin-bottom:2px;}
+.sc.amber .val{font-size:22px;font-weight:600;color:#854F0B;}
+.sc.green .val{font-size:22px;font-weight:600;color:#3B6D11;}
+.sc.amber .tgt,.sc.green .tgt{font-size:10px;opacity:0.7;margin-top:3px;}
+.sc.amber .tgt{color:#854F0B;}.sc.green .tgt{color:#3B6D11;}
+.sc.amber .pbar{background:rgba(133,79,11,0.15);}
+.sc.green .pbar{background:rgba(59,109,17,0.15);}
+.goal-banner{background:#EAF3DE;border:1.5px solid #C0DD97;border-radius:16px;padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;}
+.gb-left .gt{font-size:12px;font-weight:600;color:#27500A;}
+.gb-left .gs{font-size:11px;color:#3B6D11;opacity:0.8;margin-top:2px;}
+.goal-kg{font-size:20px;font-weight:600;color:#3B6D11;}
+.goal-kg small{font-size:11px;font-weight:400;}
+.week-row{margin-bottom:14px;}
+.week-hd{display:flex;justify-content:space-between;font-size:11px;color:#aaa;margin-bottom:6px;}
+.week-hd b{color:#ffffff;}
+.week-dots{display:flex;gap:4px;}
+.wdot{flex:1;height:7px;border-radius:4px;background:#333;cursor:pointer;}
+.wdot.done{background:#9FE1CB;}.wdot.cur{background:#1D9E75;}
+.macro-box{background:#E1F5EE;border:1.5px solid #9FE1CB;border-radius:16px;padding:14px;margin-bottom:14px;}
+.mrow{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.mrow:last-child{margin-bottom:0;}
+.mdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.mname{font-size:12px;color:#085041;width:65px;flex-shrink:0;}
+.mbar{flex:1;height:4px;border-radius:2px;background:rgba(15,110,86,0.15);overflow:hidden;}
+.mfill{height:100%;border-radius:2px;transition:width 0.4s;}
+.mvals{font-size:11px;color:#085041;min-width:65px;text-align:right;}
+.mvals b{color:#0F6E56;}
+.sec-hd{font-size:13px;font-weight:600;color:#ffffff;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+.add-btn{padding:8px 16px;border-radius:20px;background:#FAC775;color:#412402;border:none;font-size:12px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.picker-overlay{display:none;margin-bottom:14px;}
+.picker-overlay.vis{display:block;}
+.picker-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.ptab{padding:10px 6px;border:1.5px solid #3a3a3a;border-radius:12px;font-size:12px;font-weight:600;cursor:pointer;background:#2a2a2a;color:#888;font-family:inherit;text-align:center;-webkit-tap-highlight-color:transparent;}
+.ptab.active.p0{background:#FDE8ED;border-color:#F4B8C4;color:#7B2D3E;}
+.ptab.active.p1{background:#FAEEDA;border-color:#FAC775;color:#633806;}
+.ptab.active.p2{background:#EAF3DE;border-color:#C0DD97;color:#27500A;}
+.ptab.active.p3{background:#E6F1FB;border-color:#B5D4F4;color:#0C447C;}
+.ptab.active.p4{background:#F1EFE8;border-color:#888780;color:#2C2C2A;}
+.fp-item.sel4{border-color:#888780;background:#F1EFE8;}
+.fp-item.sel4 .fp-icon{background:#D3D1C7;}
+.fp-shop{font-size:10px;color:#5F5E5A;margin-top:2px;font-weight:500;}
+.badge-exact{background:#F1EFE8;color:#444441;}
+.food-picker{display:flex;flex-direction:column;gap:7px;margin-bottom:12px;}
+.fp-item{background:#2a2a2a;border:1.5px solid #3a3a3a;border-radius:13px;padding:11px 12px;display:flex;align-items:center;gap:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.fp-item.sel0{border-color:#F4B8C4;background:#FDE8ED;}
+.fp-item.sel1{border-color:#FAC775;background:#FAEEDA;}
+.fp-item.sel2{border-color:#C0DD97;background:#EAF3DE;}
+.fp-item.sel3{border-color:#B5D4F4;background:#E6F1FB;}
+.fp-icon{width:36px;height:36px;border-radius:10px;background:#333;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.fp-item.sel0 .fp-icon{background:#F4C0D1;}
+.fp-item.sel1 .fp-icon{background:#FAC775;}
+.fp-item.sel2 .fp-icon{background:#C0DD97;}
+.fp-item.sel3 .fp-icon{background:#B5D4F4;}
+.fp-info{flex:1;min-width:0;}
+.fp-name{font-size:13px;font-weight:600;color:#ffffff;}
+.fp-macro{font-size:11px;color:#aaa;margin-top:1px;}
+.fp-badge{display:inline-block;font-size:9px;padding:2px 6px;border-radius:5px;margin-top:3px;font-weight:600;}
+.badge-gi{background:#E1F5EE;color:#085041;}
+.badge-warn{background:#FDE8ED;color:#7B2D3E;}
+.badge-star{background:#EAF3DE;color:#27500A;}
+.fp-cal{font-size:12px;font-weight:500;color:#aaa;flex-shrink:0;text-align:right;}
+.fp-cal b{display:block;font-size:14px;color:#ffffff;}
+.chk{width:20px;height:20px;border-radius:50%;border:2px solid #3a3a3a;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.fp-item[class*=sel] .chk{border-color:#1D9E75;background:#1D9E75;}
+.chk-in{width:6px;height:6px;border-radius:50%;background:white;display:none;}
+.fp-item[class*=sel] .chk-in{display:block;}
+.meal-sel-label{font-size:11px;color:#aaa;margin-bottom:7px;font-weight:500;}
+.meal-sel{display:flex;gap:7px;margin-bottom:11px;}
+.msb{flex:1;padding:9px 2px;border-radius:11px;border:1.5px solid #3a3a3a;font-size:12px;font-weight:600;cursor:pointer;background:#2a2a2a;color:#888;font-family:inherit;text-align:center;-webkit-tap-highlight-color:transparent;}
+.msb.active{background:#FAC775;border-color:#EF9F27;color:#412402;}
+.add-selected-btn{width:100%;padding:12px;border-radius:13px;background:#1D9E75;color:white;border:none;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:14px;-webkit-tap-highlight-color:transparent;}
+.add-selected-btn:disabled{opacity:0.4;}
+.food-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+.fi{background:#2a2a2a;border:1.5px solid #FAC775;border-radius:13px;padding:12px 13px;display:flex;align-items:center;gap:10px;}
+.fi-icon{width:34px;height:34px;border-radius:50%;background:#2e1e05;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.fi-info{flex:1;min-width:0;}
+.fi-name{font-size:13px;font-weight:600;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fi-meta{font-size:11px;color:#854F0B;margin-top:1px;}
+.fi-cal{font-size:13px;font-weight:600;color:#633806;flex-shrink:0;}
+.del{background:none;border:none;color:#666;cursor:pointer;font-size:16px;padding:2px 4px;-webkit-tap-highlight-color:transparent;}
+.meal-lbl{font-size:11px;color:#854F0B;font-weight:600;margin-bottom:5px;padding-left:2px;}
+.meal-sec{margin-bottom:8px;}
+.empty{text-align:center;padding:24px;color:#666;font-size:13px;}
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.cal-month{font-size:16px;font-weight:600;color:#ffffff;}
+.cal-nav{width:34px;height:34px;border-radius:50%;border:1.5px solid #3a3a3a;background:#2a2a2a;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:#ffffff;-webkit-tap-highlight-color:transparent;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:16px;}
+.cal-dow{font-size:10px;font-weight:600;color:#666;text-align:center;padding:4px 0;}
+.cal-day{aspect-ratio:1;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;color:#555;position:relative;-webkit-tap-highlight-color:transparent;}
+.cal-day.inmonth{color:#ffffff;}
+.cal-day.today{font-weight:700;color:#0F6E56;background:#E1F5EE;border:1.5px solid #9FE1CB;}
+.cal-day.selected{background:#1D9E75;color:white !important;}
+.cal-day.has-data::after{content:'';width:4px;height:4px;border-radius:50%;background:#EF9F27;position:absolute;bottom:3px;left:50%;transform:translateX(-50%);}
+.cal-day.selected::after{background:white;}
+.cal-day.other-month{opacity:0.3;}
+.day-detail{background:#E6F1FB;border:1.5px solid #B5D4F4;border-radius:16px;padding:14px;}
+.day-detail-hd{font-size:13px;font-weight:600;color:#0C447C;margin-bottom:10px;}
+.day-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.dmc{background:#1a2e40;border-radius:10px;padding:10px;border:1px solid #B5D4F4;}
+.dmc-lbl{font-size:10px;color:#185FA5;margin-bottom:1px;}
+.dmc-val{font-size:17px;font-weight:600;color:#0C447C;}
+.dmc-val small{font-size:10px;font-weight:400;}
+.day-foods{display:flex;flex-direction:column;gap:5px;}
+.dfi{background:#1a2a3a;border-radius:10px;padding:9px 11px;display:flex;justify-content:space-between;align-items:center;border:1px solid #B5D4F4;}
+.dfi-name{font-size:12px;color:#ffffff;font-weight:500;}
+.dfi-meta{font-size:10px;color:#185FA5;}
+.dfi-cal{font-size:12px;font-weight:600;color:#0C447C;flex-shrink:0;margin-left:8px;}
+.no-data{text-align:center;padding:18px;color:#185FA5;font-size:12px;opacity:0.7;}
+.edit-day-btn{width:100%;margin-top:10px;padding:10px;border-radius:11px;background:#378ADD;color:white;border:none;font-size:13px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.save-indicator{position:fixed;top:12px;right:12px;background:#1D9E75;color:white;font-size:11px;font-weight:600;padding:5px 10px;border-radius:8px;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:999;}
+.save-indicator.show{opacity:1;}
+.sync-badge{font-size:10px;color:#085041;background:#E1F5EE;border-radius:8px;padding:2px 7px;margin-top:4px;display:inline-block;}
+
+
+</style>
+</head>
+<body>
+<div class="save-indicator" id="save-indicator">✓ Đã lưu</div>
+<div class="app">
+  <div class="topbar">
+    <h1>Nutrition Tracker</h1>
+    <p>Nam · 84kg · 170cm · 28t · Gym 5x/tuần</p>
+    <div class="goal-pill">🔥 <span>Giảm mỡ · 84kg → 75kg · tháng 7/2026</span></div>
+    <div class="sync-badge" id="sync-badge">📅 Hôm nay: <span id="today-label">--</span></div>
+  </div>
+  <div class="nav">
+    <button class="nav-btn t0 active" onclick="showPage('home',this)">Tổng quan</button>
+    <button class="nav-btn t1" onclick="showPage('log',this)">Nhật ký ăn</button>
+    <button class="nav-btn t2" onclick="showPage('cal',this)">Lịch</button>
+  </div>
+
+  <div class="page active" id="page-home">
+    <div class="top-stats">
+      <div class="ts-card cyan">
+        <div class="ts-lbl">Calo hôm nay</div>
+        <div class="ts-val"><span id="h-cal">0</span><small> kcal</small></div>
+        <div class="pbar"><div class="pfill" id="h-bar-cal" style="width:0%;background:#1D9E75;"></div></div>
+        <div class="ts-remain">Còn: <b id="h-remain">2,040</b> kcal</div>
+      </div>
+      <div class="ts-card blue">
+        <div class="ts-lbl">Nước uống</div>
+        <div class="ts-val"><span id="h-water-val">0</span><small> ml</small></div>
+        <div class="pbar"><div class="pfill" id="h-bar-water" style="width:0%;background:#378ADD;"></div></div>
+        <div class="ts-sub" id="h-water-sub">0 / 12 ly · 3,000ml</div>
+        <div class="cups-inline" id="cups"></div>
+      </div>
+    </div>
+    <div class="sgrid">
+      <div class="sc amber"><div class="lbl">Protein</div><div class="val" id="h-pro">0<span style="font-size:11px;">g</span></div><div class="pbar"><div class="pfill" id="h-bar-pro" style="width:0%;background:#BA7517;"></div></div><div class="tgt">mục tiêu 134g</div></div>
+      <div class="sc green"><div class="lbl">Carbs</div><div class="val" id="h-carb">0<span style="font-size:11px;">g</span></div><div class="pbar"><div class="pfill" id="h-bar-carb" style="width:0%;background:#639922;"></div></div><div class="tgt">mục tiêu 120g</div></div>
+      <div class="sc amber"><div class="lbl">Chất béo</div><div class="val" id="h-fat">0<span style="font-size:11px;">g</span></div><div class="pbar"><div class="pfill" id="h-bar-fat" style="width:0%;background:#BA7517;"></div></div><div class="tgt">mục tiêu 70g</div></div>
+      <div class="sc green"><div class="lbl">Chất xơ</div><div class="val" id="h-fib">0<span style="font-size:11px;">g</span></div><div class="pbar"><div class="pfill" id="h-bar-fib" style="width:0%;background:#639922;"></div></div><div class="tgt">mục tiêu 35g</div></div>
+    </div>
+    <div class="goal-banner">
+      <div class="gb-left"><div class="gt">Lộ trình 14 tuần · 84kg → 75kg</div><div class="gs">~0.64kg/tuần · 2,040 kcal/ngày</div></div>
+      <div class="gb-right"><div class="goal-kg">−9<small>kg</small></div><div style="font-size:10px;color:#3B6D11;opacity:0.8;">cần giảm</div></div>
+    </div>
+    <div class="week-row">
+      <div class="week-hd"><span>Tiến độ 14 tuần</span><b id="wk-txt">Tuần 1 / 14</b></div>
+      <div class="week-dots" id="wk-dots"></div>
+    </div>
+    <div class="macro-box">
+      <div class="mrow"><div class="mdot" style="background:#1D9E75;"></div><div class="mname">Protein</div><div class="mbar"><div class="mfill" id="m-pro" style="background:#1D9E75;width:0%;"></div></div><div class="mvals"><b id="mv-pro">0</b> / 134g</div></div>
+      <div class="mrow"><div class="mdot" style="background:#EF9F27;"></div><div class="mname">Carbs</div><div class="mbar"><div class="mfill" id="m-carb" style="background:#EF9F27;width:0%;"></div></div><div class="mvals"><b id="mv-carb">0</b> / 120g</div></div>
+      <div class="mrow"><div class="mdot" style="background:#97C459;"></div><div class="mname">Chất béo</div><div class="mbar"><div class="mfill" id="m-fat" style="background:#97C459;width:0%;"></div></div><div class="mvals"><b id="mv-fat">0</b> / 70g</div></div>
+      <div class="mrow"><div class="mdot" style="background:#5DCAA5;"></div><div class="mname">Chất xơ</div><div class="mbar"><div class="mfill" id="m-fib" style="background:#5DCAA5;width:0%;"></div></div><div class="mvals"><b id="mv-fib">0</b> / 35g</div></div>
+    </div>
+  </div>
+
+  <div class="page" id="page-log">
+    <div class="sec-hd">
+      <span>Nhật ký · <span id="log-date-label"></span></span>
+      <button class="add-btn" id="tog-picker">+ Thêm món</button>
+    </div>
+    <div class="picker-overlay" id="picker">
+      <div class="picker-tabs">
+        <button class="ptab p0 active" onclick="switchPTab(0,this)">🥩 Thịt - Trứng</button>
+        <button class="ptab p1" onclick="switchPTab(1,this)">🌾 Carbs</button>
+        <button class="ptab p2" onclick="switchPTab(2,this)">🥑 Chất béo</button>
+        <button class="ptab p3" onclick="switchPTab(3,this)">🍎 Snack</button>
+        <button class="ptab p4" onclick="switchPTab(4,this)">🏪 Ăn ngoài</button>
+      </div>
+      <div class="food-picker" id="food-picker"></div>
+      <div class="meal-sel-label">Chọn bữa ăn</div>
+      <div class="meal-sel">
+        <button class="msb active" onclick="selMeal(this)">Sáng</button>
+        <button class="msb" onclick="selMeal(this)">Trưa</button>
+        <button class="msb" onclick="selMeal(this)">Tối</button>
+        <button class="msb" onclick="selMeal(this)">Snack</button>
+      </div>
+      <button class="add-selected-btn" id="add-sel-btn" onclick="addSelected()" disabled>Thêm vào nhật ký</button>
+    </div>
+    <div class="food-list" id="food-list"></div>
+  </div>
+
+  <div class="page" id="page-cal">
+    <div class="cal-header">
+      <button class="cal-nav" id="prev-month">‹</button>
+      <div class="cal-month" id="cal-month-label"></div>
+      <button class="cal-nav" id="next-month">›</button>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div class="day-detail" id="day-detail" style="display:none;"></div>
+  </div>
+</div>
+
+<script>
+const TARGETS={cal:2040,pro:134,fat:70,fib:35,carb:120};
+const MEAL_ICONS={Sáng:'🌅',Trưa:'☀️',Tối:'🌙',Snack:'🍎'};
+const DOW=['CN','T2','T3','T4','T5','T6','T7'];
+const MONTHS=['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+
+const FOOD_DB=[
+  {tab:0,icon:'🍗',name:'Ức gà 100g',cal:165,pro:31,fat:4,fib:0,carb:0,gi:''},
+  {tab:0,icon:'🥚',name:'Trứng gà (1 quả)',cal:70,pro:6,fat:5,fib:0,carb:0,gi:''},
+  {tab:0,icon:'🥩',name:'Thịt bò nạc 100g',cal:150,pro:26,fat:5,fib:0,carb:0,gi:''},
+  {tab:0,icon:'🐟',name:'Cá hồi 100g',cal:208,pro:20,fat:13,fib:0,carb:0,gi:''},
+  {tab:0,icon:'🍤',name:'Tôm 100g',cal:85,pro:18,fat:1,fib:0,carb:0,gi:''},
+  {tab:0,icon:'🐄',name:'Greek yogurt 150g',cal:90,pro:15,fat:5,fib:0,carb:5,gi:'GI thấp'},
+  {tab:0,icon:'🧀',name:'Phô mai cottage 100g',cal:98,pro:11,fat:4,fib:0,carb:3,gi:''},
+  {tab:1,icon:'🍚',name:'Cơm lứt 100g (chín)',cal:111,pro:3,fat:1,fib:2,carb:23,gi:'GI thấp'},
+  {tab:1,icon:'🍠',name:'Khoai lang 100g',cal:86,pro:2,fat:0,fib:3,carb:20,gi:'GI thấp'},
+  {tab:1,icon:'🌾',name:'Yến mạch 50g',cal:190,pro:6,fat:3,fib:4,carb:34,gi:'GI thấp'},
+  {tab:1,icon:'🫘',name:'Đậu lăng 100g (chín)',cal:116,pro:9,fat:0,fib:8,carb:20,gi:'GI thấp'},
+  {tab:1,icon:'🥦',name:'Bông cải xanh 100g',cal:34,pro:3,fat:0,fib:3,carb:7,gi:'GI thấp'},
+  {tab:1,icon:'🥗',name:'Rau xanh hỗn hợp 100g',cal:20,pro:2,fat:0,fib:2,carb:3,gi:'GI thấp'},
+  {tab:2,icon:'🥑',name:'Bơ ½ quả',cal:120,pro:1,fat:11,fib:5,carb:6,gi:'GI thấp'},
+  {tab:2,icon:'🫒',name:'Dầu oliu 1 muỗng canh',cal:120,pro:0,fat:14,fib:0,carb:0,gi:''},
+  {tab:2,icon:'🥜',name:'Hạnh nhân 30g',cal:174,pro:6,fat:15,fib:3,carb:6,gi:'GI thấp'},
+  {tab:2,icon:'🌰',name:'Hạt óc chó 25g',cal:163,pro:4,fat:16,fib:2,carb:3,gi:'GI thấp'},
+  {tab:2,icon:'🥚',name:'Lòng đỏ trứng (2 cái)',cal:110,pro:5,fat:9,fib:0,carb:1,gi:''},
+  {tab:3,icon:'🫙',name:'Greek yogurt không đường 150g',cal:90,pro:15,fat:5,fib:0,carb:5,gi:'GI thấp'},
+  {tab:3,icon:'🍌',name:'Chuối xanh 1 quả (~100g)',cal:89,pro:1,fat:0,fib:3,carb:20,gi:'⭐ GI ~30'},
+  {tab:3,icon:'🍌',name:'Chuối chín vừa ½ quả',cal:45,pro:0,fat:0,fib:1,carb:12,gi:'⚠️ ăn ít'},
+  {tab:3,icon:'🍎',name:'Táo 1 quả nhỏ (150g)',cal:78,pro:0,fat:0,fib:4,carb:21,gi:'GI thấp'},
+  {tab:3,icon:'🍓',name:'Dâu tây 100g',cal:32,pro:1,fat:0,fib:2,carb:8,gi:'GI thấp'},
+  {tab:3,icon:'🫐',name:'Việt quất 100g',cal:57,pro:1,fat:0,fib:2,carb:14,gi:'GI thấp'},
+  {tab:3,icon:'🍇',name:'Nho đen 100g',cal:69,pro:1,fat:0,fib:1,carb:18,gi:'⚠️ vừa phải'},
+  {tab:3,icon:'🥕',name:'Cà rốt baby 100g',cal:35,pro:1,fat:0,fib:3,carb:8,gi:'GI thấp'},
+  {tab:3,icon:'🥒',name:'Dưa leo + hummus 30g',cal:60,pro:2,fat:3,fib:2,carb:6,gi:'GI thấp'},
+  {tab:3,icon:'🫘',name:'Edamame 100g',cal:121,pro:11,fat:5,fib:5,carb:9,gi:'GI thấp'},
+  {tab:3,icon:'🌿',name:'Matcha + Oatside 500ml',cal:55,pro:1,fat:5,fib:1,carb:13,gi:'GI thấp'},
+  {tab:3,icon:'🥜',name:'Bơ đậu phộng tự nhiên 1 muỗng',cal:94,pro:4,fat:8,fib:1,carb:3,gi:'GI thấp'},
+  {tab:3,icon:'🍫',name:'Dark chocolate 85%+ (20g)',cal:110,pro:2,fat:9,fib:2,carb:6,gi:'GI thấp',shop:''},
+  {tab:4,icon:'🥬',name:'Canh Rong Biển Nấm Kim Châm',cal:70,pro:6,fat:1,fib:3,carb:8,gi:'✓ Calo thực',shop:'Lala Salad'},
+  {tab:4,icon:'🥚',name:'Trứng Lòng Đào Ngâm Tương HQ (2 trứng)',cal:148,pro:12,fat:10,fib:0,carb:4,gi:'✓ Calo thực',shop:'Lala Salad'},
+  {tab:4,icon:'🥗',name:'Salad Gà Kèm Nước Sốt Mè Rang',cal:720,pro:45,fat:38,fib:6,carb:42,gi:'⚠️ Calo cao',shop:'Lala Salad'},
+];
+
+function getTodayKey(){
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+function dateLabel(k){
+  const[y,m,d]=k.split('-');return d+'/'+m+'/'+y;
+}
+
+function saveData(){
+  try{localStorage.setItem('nt_data',JSON.stringify(allData));}catch(e){}
+  showSaveIndicator();
+}
+
+function loadData(){
+  try{
+    const raw=localStorage.getItem('nt_data');
+    if(raw)return JSON.parse(raw);
+  }catch(e){}
+  return {};
+}
+
+function showSaveIndicator(){
+  const el=document.getElementById('save-indicator');
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),1500);
+}
+
+let allData=loadData();
+const TODAY_KEY=getTodayKey();
+
+document.getElementById('today-label').textContent=dateLabel(TODAY_KEY);
+document.getElementById('log-date-label').textContent=dateLabel(TODAY_KEY);
+
+if(!allData[TODAY_KEY]){
+  allData[TODAY_KEY]={foods:[],water:0,nextId:1};
+  saveData();
+}
+
+function getDay(k){
+  if(!allData[k])allData[k]={foods:[],water:0,nextId:1};
+  return allData[k];
+}
+
+let curWeek=1,curPTab=0,selectedFoods=new Set(),curMeal='Sáng';
+let logDateKey=TODAY_KEY,calYear=new Date().getFullYear(),calMonth=new Date().getMonth(),selectedCalDay=TODAY_KEY;
+
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');btn.classList.add('active');
+  if(id==='cal')renderCal();
+  if(id==='log'){document.getElementById('log-date-label').textContent=dateLabel(logDateKey);renderLog();}
+  if(id==='home')renderHome();
+}
+
+function renderHome(){
+  const d=getDay(TODAY_KEY);
+  const t=d.foods.reduce((a,f)=>({cal:a.cal+(f.cal||0),pro:a.pro+(f.pro||0),fat:a.fat+(f.fat||0),fib:a.fib+(f.fib||0),carb:a.carb+(f.carb||0)}),{cal:0,pro:0,fat:0,fib:0,carb:0});
+  const rc=Math.round(t.cal),remain=TARGETS.cal-rc;
+  document.getElementById('h-cal').textContent=rc.toLocaleString();
+  const re=document.getElementById('h-remain');
+  re.textContent=remain<0?'Vượt '+Math.abs(remain).toLocaleString():remain.toLocaleString();
+  re.className=remain<0?'ov':'';
+  document.getElementById('h-pro').innerHTML=Math.round(t.pro)+'<span style="font-size:11px;">g</span>';
+  document.getElementById('h-fat').innerHTML=Math.round(t.fat)+'<span style="font-size:11px;">g</span>';
+  document.getElementById('h-fib').innerHTML=Math.round(t.fib)+'<span style="font-size:11px;">g</span>';
+  document.getElementById('h-carb').innerHTML=Math.round(t.carb)+'<span style="font-size:11px;">g</span>';
+  const cp=Math.min(100,Math.round(t.cal/TARGETS.cal*100));
+  const bc=document.getElementById('h-bar-cal');bc.style.width=cp+'%';bc.style.background=cp>=100?'#E24B4A':'#1D9E75';
+  ['pro','fat','fib','carb'].forEach(k=>{document.getElementById('h-bar-'+k).style.width=Math.min(100,Math.round(t[k]/TARGETS[k]*100))+'%';});
+  [['pro',134],['fat',70],['fib',35],['carb',120]].forEach(([k,tgt])=>{
+    document.getElementById('m-'+k).style.width=Math.min(100,Math.round(t[k]/tgt*100))+'%';
+    document.getElementById('mv-'+k).textContent=Math.round(t[k]);
+  });
+  const wml=d.water*250;
+  document.getElementById('h-water-val').textContent=wml.toLocaleString();
+  document.getElementById('h-water-sub').textContent=d.water+' / 12 ly · 3,000ml';
+  document.getElementById('h-bar-water').style.width=Math.min(100,Math.round(wml/3000*100))+'%';
+  initCups();
+}
+
+function renderWeeks(){
+  const w=document.getElementById('wk-dots');w.innerHTML='';
+  for(let i=1;i<=14;i++){
+    const d=document.createElement('div');
+    d.className='wdot'+(i<curWeek?' done':i===curWeek?' cur':'');
+    d.addEventListener('click',()=>{curWeek=i;renderWeeks();document.getElementById('wk-txt').textContent='Tuần '+i+' / 14';});
+    w.appendChild(d);
+  }
+}
+renderWeeks();
+
+function initCups(){
+  const d=getDay(TODAY_KEY);const w=document.getElementById('cups');w.innerHTML='';
+  for(let i=0;i<12;i++){
+    const c=document.createElement('div');c.className='cup'+(i<d.water?' on':'');c.textContent='🥛';
+    c.addEventListener('click',()=>{
+      d.water=(i<d.water)?i:i+1;
+      saveData();initCups();
+      const ml=d.water*250;
+      document.getElementById('h-water-val').textContent=ml.toLocaleString();
+      document.getElementById('h-water-sub').textContent=d.water+' / 12 ly · 3,000ml';
+      document.getElementById('h-bar-water').style.width=Math.min(100,Math.round(ml/3000*100))+'%';
+    });
+    w.appendChild(c);
+  }
+}
+
+document.getElementById('tog-picker').addEventListener('click',()=>{
+  const p=document.getElementById('picker');const v=p.classList.contains('vis');
+  p.classList.toggle('vis');document.getElementById('tog-picker').textContent=v?'+ Thêm món':'✕ Đóng';
+  if(!v)renderPicker();
+});
+
+function switchPTab(idx,btn){
+  curPTab=idx;selectedFoods.clear();
+  document.querySelectorAll('.ptab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');renderPicker();updateAddBtn();
+}
+
+function renderPicker(){
+  const items=FOOD_DB.filter(f=>f.tab===curPTab);const sc=['sel0','sel1','sel2','sel3','sel4'][curPTab];
+  const w=document.getElementById('food-picker');w.innerHTML='';
+  items.forEach(f=>{
+    const ri=FOOD_DB.indexOf(f);const isSel=selectedFoods.has(ri);
+    const div=document.createElement('div');div.className='fp-item'+(isSel?' '+sc:'');
+    const isGreen=f.gi&&f.gi.startsWith('⭐');const isWarn=f.gi&&f.gi.startsWith('⚠️');const isExact=f.gi&&f.gi.startsWith('✓');
+    const badgeCls=isGreen?'badge-star':isWarn?'badge-warn':isExact?'badge-exact':'badge-gi';
+    const badge=f.gi?`<span class="fp-badge ${badgeCls}">${f.gi}</span>`:'';
+    const shopTag=f.shop?`<div class="fp-shop">📍 ${f.shop}</div>`:'';
+    div.innerHTML=`<div class="fp-icon">${f.icon}</div><div class="fp-info"><div class="fp-name">${f.name}</div><div class="fp-macro">P ${f.pro}g · C ${f.carb}g · F ${f.fat}g</div>${badge}${shopTag}</div><div class="fp-cal"><b>${f.cal}</b>kcal</div><div class="chk"><div class="chk-in"></div></div>`;
+    div.addEventListener('click',()=>{selectedFoods.has(ri)?selectedFoods.delete(ri):selectedFoods.add(ri);renderPicker();updateAddBtn();});
+    w.appendChild(div);
+  });
+}
+
+function updateAddBtn(){
+  const btn=document.getElementById('add-sel-btn');const n=selectedFoods.size;
+  btn.disabled=n===0;btn.textContent=n>0?`Thêm ${n} món vào ${curMeal}`:'Thêm vào nhật ký';
+}
+
+function selMeal(btn){
+  document.querySelectorAll('.msb').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');curMeal=btn.textContent;updateAddBtn();
+}
+
+function addSelected(){
+  const d=getDay(logDateKey);
+  if(!d.nextId)d.nextId=1;
+  selectedFoods.forEach(idx=>{
+    const f=FOOD_DB[idx];
+    d.foods.push({id:d.nextId++,name:f.name,icon:f.icon,meal:curMeal,cal:f.cal,pro:f.pro,fat:f.fat,fib:f.fib,carb:f.carb});
+  });
+  saveData();selectedFoods.clear();renderPicker();updateAddBtn();
+  document.getElementById('picker').classList.remove('vis');
+  document.getElementById('tog-picker').textContent='+ Thêm món';
+  renderLog();if(logDateKey===TODAY_KEY)renderHome();
+}
+
+function delFood(id){
+  const d=getDay(logDateKey);
+  d.foods=d.foods.filter(f=>f.id!==id);
+  saveData();renderLog();if(logDateKey===TODAY_KEY)renderHome();
+}
+
+function renderLog(){
+  document.getElementById('log-date-label').textContent=dateLabel(logDateKey);
+  const d=getDay(logDateKey);const w=document.getElementById('food-list');
+  if(!d.foods||!d.foods.length){w.innerHTML='<div class="empty">Chưa có gì. Nhấn "+ Thêm món" để bắt đầu!</div>';return;}
+  let html='';
+  ['Sáng','Trưa','Tối','Snack'].forEach(meal=>{
+    const items=d.foods.filter(f=>f.meal===meal);if(!items.length)return;
+    html+=`<div class="meal-sec"><div class="meal-lbl">${MEAL_ICONS[meal]} ${meal}</div>`;
+    items.forEach(f=>{
+      const m=[];
+      if(f.pro)m.push('P '+Math.round(f.pro)+'g');
+      if(f.carb)m.push('C '+Math.round(f.carb)+'g');
+      if(f.fat)m.push('F '+Math.round(f.fat)+'g');
+      html+=`<div class="fi"><div class="fi-icon">${f.icon||MEAL_ICONS[meal]}</div><div class="fi-info"><div class="fi-name">${f.name}</div><div class="fi-meta">${m.join(' · ')||'—'}</div></div><div class="fi-cal">${Math.round(f.cal)} kcal</div><button class="del" onclick="delFood(${f.id})">✕</button></div>`;
+    });html+='</div>';
+  });w.innerHTML=html;
+}
+
+function dateKey(y,m,d){return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');}
+
+function renderCal(){
+  document.getElementById('cal-month-label').textContent=MONTHS[calMonth]+' '+calYear;
+  const grid=document.getElementById('cal-grid');grid.innerHTML='';
+  DOW.forEach(d=>{const el=document.createElement('div');el.className='cal-dow';el.textContent=d;grid.appendChild(el);});
+  const first=new Date(calYear,calMonth,1).getDay();
+  const days=new Date(calYear,calMonth+1,0).getDate();
+  const prevDays=new Date(calYear,calMonth,0).getDate();
+  for(let i=0;i<first;i++){const el=document.createElement('div');el.className='cal-day other-month';el.textContent=prevDays-first+1+i;grid.appendChild(el);}
+  for(let d=1;d<=days;d++){
+    const el=document.createElement('div');const key=dateKey(calYear,calMonth,d);
+    let cls='cal-day inmonth';
+    if(key===TODAY_KEY)cls+=' today';
+    if(key===selectedCalDay)cls+=' selected';
+    if(allData[key]&&allData[key].foods&&allData[key].foods.length>0)cls+=' has-data';
+    el.className=cls;el.textContent=d;
+    el.addEventListener('click',()=>{selectedCalDay=key;renderCal();showDayDetail(key);});
+    grid.appendChild(el);
+  }
+  const rem=(7-((first+days)%7))%7;
+  for(let i=1;i<=rem;i++){const el=document.createElement('div');el.className='cal-day other-month';el.textContent=i;grid.appendChild(el);}
+  if(selectedCalDay)showDayDetail(selectedCalDay);
+}
+
+function showDayDetail(key){
+  const det=document.getElementById('day-detail');const d=allData[key];det.style.display='block';
+  if(!d||!d.foods||!d.foods.length){det.innerHTML=`<div class="day-detail-hd">${dateLabel(key)}</div><div class="no-data">Chưa có dữ liệu cho ngày này</div>`;return;}
+  const t=d.foods.reduce((a,f)=>({cal:a.cal+(f.cal||0),pro:a.pro+(f.pro||0),fat:a.fat+(f.fat||0),carb:a.carb+(f.carb||0)}),{cal:0,pro:0,fat:0,carb:0});
+  const rows=d.foods.map(f=>`<div class="dfi"><div><div class="dfi-name">${f.icon||''} ${f.name}</div><div class="dfi-meta">${f.meal}</div></div><div class="dfi-cal">${Math.round(f.cal)} kcal</div></div>`).join('');
+  det.innerHTML=`<div class="day-detail-hd">${dateLabel(key)}</div>
+    <div class="day-mini-grid">
+      <div class="dmc"><div class="dmc-lbl">Calo</div><div class="dmc-val">${Math.round(t.cal)}<small> kcal</small></div></div>
+      <div class="dmc"><div class="dmc-lbl">Protein</div><div class="dmc-val">${Math.round(t.pro)}<small>g</small></div></div>
+      <div class="dmc"><div class="dmc-lbl">Carbs</div><div class="dmc-val">${Math.round(t.carb)}<small>g</small></div></div>
+      <div class="dmc"><div class="dmc-lbl">Chất béo</div><div class="dmc-val">${Math.round(t.fat)}<small>g</small></div></div>
+    </div>
+    <div class="day-foods">${rows}</div>
+    <button class="edit-day-btn" onclick="goToLogDay('${key}')">Chỉnh sửa ngày này</button>`;
+}
+
+function goToLogDay(key){
+  logDateKey=key;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-log').classList.add('active');
+  document.querySelectorAll('.nav-btn')[1].classList.add('active');
+  renderLog();
+}
+
+document.getElementById('prev-month').addEventListener('click',()=>{calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCal();});
+document.getElementById('next-month').addEventListener('click',()=>{calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCal();});
+
+renderHome();renderLog();
+</script>
+</body>
+</html>
